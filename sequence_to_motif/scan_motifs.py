@@ -6,6 +6,7 @@ import numpy as np
 import MOODS.parsers
 import MOODS.tools
 import MOODS.scan
+from itertools import izip 
 import pdb 
 
 def parse_args():
@@ -19,6 +20,8 @@ def parse_args():
     parser.add_argument('--bin_size',type=int,help='bin sizes for scanning reference genome',default=1000)
     parser.add_argument('--num_hits_per_motif',type=int,help="maximum instances of a single motif in a sequence that will be recorded",default=1)
     parser.add_argument('--chrom',help="optionally, specify the chromosomes of interest for the parser to focus on, comma-separated list of chromosomes",default=None)
+    parser.add_argument('--positions_bed',help="input bed file containing sequence positions to scan",default=None)
+    parser.add_argument('--binarize',help="remove this flag if you don't want to binarize the scores",action='store_true') 
     return parser.parse_args()
 
 #helper function to convert numpy array to tuple (MOODS needs tuples for scanning)
@@ -52,6 +55,91 @@ def parse_background_freqs(background_freqs_file):
             bg_freqs[3]=float(tokens[1])
     print str(bg_freqs)
     return tuple(bg_freqs) 
+
+def global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_names,output_dir):         
+    #iterate through each chromosome in the reference sequence to scan for motifs
+    if args.chrom==None:
+        chroms=chrom_sizes.keys()
+    else:
+        chroms=args.chrom.split(',')
+    for chrom in chroms:
+        print("scanning:"+str(chrom))
+        #pre-allocate the output numpy array with zeros
+        num_sequence_bins=chrom_sizes[chrom]/args.bin_size
+        chrom_motif_mat=np.zeros((num_sequence_bins,args.num_hits_per_motif*num_motifs))
+        chrom_pos_mat=np.zeros((num_sequence_bins,2))
+        
+        pos_start=0
+        pos_end=pos_start+args.bin_size
+        bin_index=0 
+        while pos_end < chrom_sizes[chrom]:
+            if pos_start%1000000==0: 
+                print("pos_start:"+str(pos_start)+"/"+str(chrom_sizes[chrom])) 
+            #get the next genome bin to scan 
+            seq=reference.fetch(chrom,pos_start,pos_end)
+            #scan!
+            results=scanner.scan(seq)
+            #threshold the motif scores to binary values, either take the max score or the top 3 scores to threshold 
+            for motif_index in range(num_motifs):
+                #get the top n scores for each motif
+                results_cur_motif=[r.score for r in results[motif_index]]
+                results_cur_motif.sort(reverse=True)
+                #pad to the desired length
+                results_cur_motif+=[-100]*(args.num_hits_per_motif-len(results_cur_motif))
+                #truncate to the desired length
+                results_cur_motif=results_cur_motif[0:args.num_hits_per_motif]
+                if args.binarize==False:
+                    chrom_motif_mat[bin_index,motif_index*args.num_hits_per_motif:(motif_index+1)*args.num_hits_per_motif]=results_cur_motif
+                else:
+                    chrom_motif_mat[bin_index,motif_index*args.num_hits_per_motif:(motif_index+1)*args.num_hits_per_motif]=[int(m>thresholds[motif_index])for m in results_cur_motif]
+            chrom_pos_mat[bin_index][0]=pos_start
+            chrom_pos_mat[bin_index][1]=pos_end                                 
+            #update indices 
+            pos_start=pos_end
+            pos_end=pos_start+args.bin_size
+            bin_index+=1
+
+        #save output numpy pickles for the chromosome
+        np.save("/".join([output_dir,".".join([chrom,"mat"])]),chrom_motif_mat)
+        np.save("/".join([output_dir,".".join([chrom,"pos"])]),chrom_pos_mat)
+        outf_names=open(output_dir+'/motif_names.txt','w')
+        outf_names.write('\n'.join(motif_names))
+        print("finished processing chromosome:"+str(chrom))
+        
+def scan_specified_positions(args,positions,num_motifs,scanner,thresholds,reference,motif_names,output_dir):
+    num_sequence_bins=len(positions)
+    motif_mat=np.zeros((num_sequence_bins,args.num_hits_per_motif*num_motifs))
+    pos_mat=np.chararray((num_sequence_bins,3))
+    bin_index=0 
+    for position in positions:
+        seq=reference.fetch(position[0],int(position[1]),int(position[2]))
+        #scan!
+        if bin_index%10000==0:
+            print(str(bin_index))
+        results=scanner.scan(seq)
+        for motif_index in range(num_motifs):
+            #get the top n scores for each motif
+            results_cur_motif=[r.score for r in results[motif_index]]
+            results_cur_motif.sort(reverse=True)
+            #pad to the desired length
+            results_cur_motif+=[-100]*(args.num_hits_per_motif-len(results_cur_motif))
+            #truncate to the desired length
+            results_cur_motif=results_cur_motif[0:args.num_hits_per_motif]
+            if args.binarize==False:
+                motif_mat[bin_index,motif_index*args.num_hits_per_motif:(motif_index+1)*args.num_hits_per_motif]=results_cur_motif
+            else:
+                motif_mat[bin_index,motif_index*args.num_hits_per_motif:(motif_index+1)*args.num_hits_per_motif]=[int(m>thresholds[motif_index])for m in results_cur_motif]
+        pos_mat[bin_index][0]=position[0]
+        pos_mat[bin_index][1]=position[1]
+        pos_mat[bin_index][2]=position[2]
+        bin_index+=1
+    #save the output numpy pickle
+    #save output numpy pickles for the chromosome
+    np.save("/".join([output_dir,"mat"]),motif_mat)
+    np.save("/".join([output_dir,"pos"]),pos_mat)
+    outf_names=open(output_dir+'/motif_names.txt','w')
+    outf_names.write('\n'.join(motif_names))
+        
 
 def main():
     args=parse_args()
@@ -87,55 +175,14 @@ def main():
     except:
         print("Directory already exists:"+output_dir) 
         
-
-    #iterate through each chromosome in the reference sequence to scan for motifs
-    if args.chrom==None:
-        chroms=chrom_sizes.keys()
+    #decide whether we are scanning globally or at specific positions from a bed file 
+    if args.positions_bed==None:
+        global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_names,output_dir)
     else:
-        chroms=args.chrom.split(',')
-    for chrom in chroms:
-        print("scanning:"+str(chrom))
-        #pre-allocate the output numpy array with zeros
-        num_sequence_bins=chrom_sizes[chrom]/args.bin_size
-        chrom_motif_mat=np.zeros((num_sequence_bins,args.num_hits_per_motif*num_motifs))
-        chrom_pos_mat=np.zeros((num_sequence_bins,2))
-        
-        pos_start=0
-        pos_end=pos_start+args.bin_size
-        bin_index=0 
-        while pos_end < chrom_sizes[chrom]:
-            #if pos_start%1000000==0: 
-            #    print("pos_start:"+str(pos_start)+"/"+str(chrom_sizes[chrom])) 
-            #get the next genome bin to scan 
-            seq=reference.fetch(chrom,pos_start,pos_end)
-            #scan!
-            results=scanner.scan(seq)
-            #threshold the motif scores to binary values, either take the max score or the top 3 scores to threshold 
-            for motif_index in range(num_motifs):
-                #get the top n scores for each motif
-                results_cur_motif=[r.score for r in results[motif_index]]
-                results_cur_motif.sort(reverse=True)
-                num_hits=len(results_cur_motif) 
-                for motif_result_index in range(args.num_hits_per_motif):
-                    if motif_result_index<num_hits:
-                        if results_cur_motif[motif_result_index]>=thresholds[motif_index]:
-                            #save 1
-                            chrom_motif_mat[bin_index,motif_index*args.num_hits_per_motif+motif_result_index]=1
-                    else:
-                        break
-            chrom_pos_mat[bin_index][0]=pos_start
-            chrom_pos_mat[bin_index][1]=pos_end                                 
-            #update indices 
-            pos_start=pos_end
-            pos_end=pos_start+args.bin_size
-            bin_index+=1
+        positions=[i.split('\t') for i in open(args.positions_bed,'r').read().strip().split('\n')]
+        scan_specified_positions(args,positions,num_motifs,scanner,thresholds,reference,motif_names,output_dir)
 
-        #save output numpy pickles for the chromosome
-        np.save("/".join([output_dir,".".join([chrom,"mat"])]),chrom_motif_mat)
-        np.save("/".join([output_dir,".".join([chrom,"pos"])]),chrom_pos_mat)
-        outf_names=open(output_dir+'/motif_names.txt','w')
-        outf_names.write('\n'.join(motif_names))
-        print("finished processing chromosome:"+str(chrom))
+
 if __name__=='__main__':
     main()
     
