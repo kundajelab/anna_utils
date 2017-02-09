@@ -85,7 +85,7 @@ def global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_n
                 results_cur_motif=[r.score for r in results[motif_index]]
                 results_cur_motif.sort(reverse=True)
                 #pad to the desired length
-                results_cur_motif+=[-100]*(args.num_hits_per_motif-len(results_cur_motif))
+                results_cur_motif+=[0]*(args.num_hits_per_motif-len(results_cur_motif))
                 #truncate to the desired length
                 results_cur_motif=results_cur_motif[0:args.num_hits_per_motif]
                 if args.binarize==False:
@@ -109,7 +109,7 @@ def global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_n
 def scan_specified_positions(args,positions,num_motifs,scanner,thresholds,reference,motif_names,output_dir):
     num_sequence_bins=len(positions)
     motif_mat=np.zeros((num_sequence_bins,args.num_hits_per_motif*num_motifs))
-    pos_mat=np.chararray((num_sequence_bins,3))
+    pos_mat=np.empty((num_sequence_bins,3),dtype=object)
     bin_index=0 
     for position in positions:
         seq=reference.fetch(position[0],int(position[1]),int(position[2]))
@@ -122,7 +122,7 @@ def scan_specified_positions(args,positions,num_motifs,scanner,thresholds,refere
             results_cur_motif=[r.score for r in results[motif_index]]
             results_cur_motif.sort(reverse=True)
             #pad to the desired length
-            results_cur_motif+=[-100]*(args.num_hits_per_motif-len(results_cur_motif))
+            results_cur_motif+=[0]*(args.num_hits_per_motif-len(results_cur_motif))
             #truncate to the desired length
             results_cur_motif=results_cur_motif[0:args.num_hits_per_motif]
             if args.binarize==False:
