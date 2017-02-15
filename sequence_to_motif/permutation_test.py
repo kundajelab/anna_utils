@@ -98,6 +98,7 @@ def initial_scan(chrom_sizes,args,reference,scanner,threshold):
             pos_end+=args.slide
     print('completed initial scan!')
     print(str(len(potential_hits.keys())))
+    #pdb.set_trace() 
     return potential_hits,initial_collisions
 
 #perform a permutation test on specified genome region 
@@ -185,7 +186,9 @@ def main():
     counter=0
     permutation_test_collisions=0 
     for region in potential_hits:
-        print(str(counter))
+        #print(str(counter))
+        if counter%1000==0:
+            print(str(counter))
         potential_hits[region],collisions=permutation_test(region,potential_hits[region],reference,scanner,args)
         permutation_test_collisions+=collisions
         counter+=1 
