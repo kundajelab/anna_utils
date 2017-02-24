@@ -27,12 +27,12 @@ def parse_args():
     parser.add_argument("--out_prefix",help="output file prefix")
     parser.add_argument("--permuted_reference",help="permuted genome in bins of 1kb, also a fasta file i.e. hg19.permuted.fa")
     parser.add_argument("--pwm",type=str,nargs="+",help="list of pwm files (separated by space)")
-    parser.add_argument("--p_val",help="p-value cutoff for motif calling")
+    parser.add_argument("--p_val",type=float,help="p-value cutoff for motif calling")
     parser.add_argument('--foreground_freqs',help='file containing the background allele frequencies,will be computed on the fly if not provided,allele frequencies are tab-delimited in order of A, C, G, T. i.e. 0.22 0.28 0.28 0.22')
     parser.add_argument('--test_to_perform',help='one of hist,fdr,score_cutoff')
-    parser.add_argument('--fdr_thresh',default=0.2)
+    parser.add_argument('--fdr_thresh',type=float)
     parser.add_argument('--freqs',help="use this flag if you are providing a matrix of frequencies rather than a PWM",action='store_true')
-    parser.add_argument('--pseudocount',help="pseudocount to add when providing a matrix of frequency values rather than a PWM",default=1e-4)
+    parser.add_argument('--pseudocount',type=float,help="pseudocount to add when providing a matrix of frequency values rather than a PWM",default=1e-4)
     return parser.parse_args() 
 
 #parses the provided foreground bed file
@@ -142,22 +142,18 @@ def main():
     print("completed scanning")
 
     if args.test_to_perform=="score_cutoff":
-        outf=open("score_cutoffs."+str(args.p_val)+"."+str(args.fdr_thresh)+".tsv",'w')
+        outf=open(args.out_prefix+".score_cutoffs.tsv",'w')
         outf.write('Motif\tP-val\tFDR-thresh\tScore-Cutoff\tNumHitsAbovesCoreCutoff\n')
 
-    for motif_index in range(len(motif_names)): 
+    for motif_index in range(len(motif_names)):
+        print(str(motif_names[motif_index]))
+
         #write out the histograms 
-        outf_original=open(motif_names[motif_index]+"."+args.out_prefix+".original",'w')
         score_keys_original=distribution_original[motif_index].keys()
         score_keys_original.sort()
-        for key in score_keys_original:
-            outf_original.write(str(key)+'\t'+str(distribution_original[motif_index][key])+'\n')
         
-        outf_permuted=open(motif_names[motif_index]+"."+args.out_prefix+".permuted",'w')
         score_keys_permuted=distribution_permuted[motif_index].keys()
         score_keys_permuted.sort() 
-        for key in score_keys_permuted:
-            outf_permuted.write(str(key)+'\t'+str(distribution_permuted[motif_index][key])+'\n')
 
         #select the specific test to perform 
         if args.test_to_perform=="hist": 
@@ -205,9 +201,10 @@ def main():
                 if key in distribution_permuted[motif_index]: 
                     permuted_hits=distribution_permuted[motif_index][key]
                 fdr_val=permuted_hits/(1.0*(permuted_hits+original_hits))
-                if fdr_val < args.fdr_thresh:
+                if fdr_val <= args.fdr_thresh:
                     if key < min_score_for_good_fdr:
                         min_score_for_good_fdr=key
+                        print(str(fdr_val))
             #we have found the score threshold, now scan the non-permuted genome at that threshold & compute the number of hits.
             scanner = MOODS.scan.Scanner(7)
             scanner.set_motifs([matrices[motif_index]],fg_freqs, [min_score_for_good_fdr],)
