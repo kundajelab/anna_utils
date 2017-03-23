@@ -1,0 +1,5 @@
+{
+    "class": "GraphAccuracyStats",
+    "kwargs": {"key_metric": "auPRC",
+               "all_metrics": ["auROC","auPRC","recallAtFDR10","recallAtFDR20","recallAtFDR50","positives_accuracy","negatives_accuracy","balanced_accuracy","unbalanced_accuracy","num_positives","num_negatives"]}
+}

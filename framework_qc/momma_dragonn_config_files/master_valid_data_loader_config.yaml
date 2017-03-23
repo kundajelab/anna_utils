@@ -1,0 +1,9 @@
+{
+"class":"hdf5_data_loader.MultimodalBatchDataLoader",
+"kwargs":{
+"path_to_hdf5":"/srv/scratch/annashch/deeplearning/dmso/inputs/s_by_m_by_pos/normalized.dmso.validate.hdf5",
+"bundle_x_and_y_in_generator":true,
+"batch_size":1000,
+"num_to_load_for_eval":100000
+}
+}

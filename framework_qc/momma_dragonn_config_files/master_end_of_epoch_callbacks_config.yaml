@@ -1,0 +1,7 @@
+[
+    {"class": "SaveBestValidModel",
+     "kwargs": {"directory": "model_md"}},
+    {"class": "PrintPerfAfterEpoch",
+     "kwargs": {"print_trend": true}},
+    {"log":"qc.log"}
+]

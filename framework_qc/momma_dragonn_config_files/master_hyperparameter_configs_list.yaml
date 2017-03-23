@@ -1,0 +1,147 @@
+[{
+        "other_data_loaders": {
+                "train": {
+                        "class": "hdf5_data_loader.MultimodalBatchDataLoader",
+                        "kwargs": {
+                                "batch_size": 1000,
+                                "path_to_hdf5": "/srv/scratch/annashch/deeplearning/dmso/inputs/s_by_m_by_pos/normalized.dmso.train.hdf5",
+                                "num_to_load_for_eval": 400000,
+                                "bundle_x_and_y_in_generator": true
+                        }
+                }
+        },
+        "model_creator": {
+                "class": "flexible_keras.FlexibleKerasGraph",
+                "kwargs": {
+                        "outputs_config": [{
+                                "input": "output_act",
+                                "name": "output"
+                        }],
+                        "optimizer_config": {
+                                "class": "keras.optimizers.Adam",
+                                "kwargs": {
+                                        "beta_1": 0.9,
+                                        "beta_2": 0.999,
+                                        "lr": 0.001
+                                }
+                        },
+                        "loss_dictionary": {
+
+                                "output": {
+                                        "class": "keras.objectives.get_weighted_binary_crossentropy",
+                                        "kwargs": {
+                                                "w1_weights": [5.37962913731224, 6.40135236664162, 5.60434683265594, 6.15771255553527, 5.36010674931129, 5.06491499227202, 6.10209881941408, 6.35102434737577, 5.82919715388604, 6.27203762824288, 6.26286549933844, 5.43299861728262],
+                                                "w0_weights": [1.22832983539188, 1.18513881934012, 1.21718607141139, 1.19388439918522, 1.22935218275515, 1.24600760456274, 1.19599777177872, 1.18688010651464, 1.20707375742473, 1.18967998153938, 1.19001055606033, 1.22558094110415]
+                                        }
+                                }
+                                },
+                                "nodes_config": [{
+                                        "kwargs": {
+                                                "W_regularizer": {
+                                                        "kwargs": {
+                                                                "l2": 0.000001
+                                                        },
+                                                        "autoload": true,
+                                                        "class": "keras.regularizers.WeightRegularizer"
+                                                },
+                                                "output_dim": 1000,
+                                                "W_constraint": {
+                                                        "kwargs": {
+                                                                "m": 7,
+                                                                "axis": 1
+                                                        },
+                                                        "autoload": true,
+                                                        "class": "keras.constraints.maxnorm"
+                                                },
+                                                "init": "glorot_uniform"
+                                        },
+                                        "input_name": "sequence",
+                                        "name": "fc_1",
+                                        "class": "keras.layers.core.Dense"
+                                }, {
+                                        "kwargs": {},
+                                        "input_name": "fc_1",
+                                        "name": "fc_act1",
+                                        "class": "keras.layers.advanced_activations.PReLU"
+                                }, {
+                                        "kwargs": {
+                                                "p": 0.5
+                                        },
+                                        "input_name": "fc_act1",
+                                        "name": "dropout1",
+                                        "class": "keras.layers.core.Dropout"
+                                }, {
+                                        "kwargs": {
+                                                "W_regularizer": {
+                                                        "kwargs": {
+                                                                "l2": 0.000001
+                                                        },
+                                                        "autoload": true,
+                                                        "class": "keras.regularizers.WeightRegularizer"
+                                                },
+                                                "output_dim": 500,
+                                                "init": "glorot_uniform"
+                                        },
+                                        "input_name": "dropout1",
+                                        "name": "fc_2",
+                                        "class": "keras.layers.core.Dense"
+                                }, {
+                                        "kwargs": {},
+                                        "input_name": "fc_2",
+                                        "name": "fc_act2",
+                                        "class": "keras.layers.advanced_activations.PReLU"
+                                }, {
+                                        "kwargs": {
+                                                "p": 0.5
+                                        },
+                                        "input_name": "fc_act2",
+                                        "name": "dropout2",
+                                        "class": "keras.layers.core.Dropout"
+                                }, {
+                                        "kwargs": {
+                                                "W_regularizer": {
+                                                        "kwargs": {
+                                                                "l1": 0.001
+                                                        },
+                                                        "autoload": true,
+                                                        "class": "keras.regularizers.WeightRegularizer"
+                                                },
+                                                "output_dim": 12,
+                                                "init": "glorot_uniform"
+                                        },
+                                        "input_name": "dropout2",
+                                        "name": "fc_3",
+                                        "class": "keras.layers.core.Dense"
+                                }, {
+                                        "kwargs": {
+                                                "activation": "sigmoid"
+                                        },
+                                        "input_name": "fc_3",
+                                        "name": "output_act",
+                                        "class": "keras.layers.core.Activation"
+                                }],
+                                "inputs_config": [{
+                                        "name": "sequence",
+                                        "input_shape": [
+                                                15360
+                                        ]
+                                }]
+                        }
+                
+        },
+        "model_trainer": {
+                "class": "keras_model_trainer.KerasFitGeneratorModelTrainer",
+                "kwargs": {
+                        "samples_per_epoch": 704127,
+                        "stopping_criterion_config": {
+                                "class": "EarlyStopping",
+                                "kwargs": {
+                                        "max_epochs": 20,
+                                        "epochs_to_wait": 3
+                                }
+                        }
+                }
+        },
+        "message": "S by M, POSITIONAL, unthresholded values, p-val cutoff 5e-5, hocomoco input motifs, non_randomized batches,1e-6 reg, NEW KERAS FOR REAL! "
+
+}]
