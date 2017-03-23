@@ -1,0 +1,13 @@
+"","x"
+"SG2M_R1_controls",1.22832983539188
+"SG2M_R2_treated",1.18513881934012
+"earlyG1_R1_treated",1.21718607141139
+"lateG1_R1_treated",1.19388439918522
+"earlyG1_R1_control",1.22935218275515
+"lateG1_R1_controls",1.24600760456274
+"earlyG1_R2_treated",1.19599777177872
+"SG2M_R2_controls",1.18688010651464
+"SG2M_R1_treated",1.20707375742473
+"lateG1_R2_treated",1.18967998153938
+"lateG1_R2_controls",1.19001055606033
+"earlyG1_R2_controls",1.22558094110415
