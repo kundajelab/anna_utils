@@ -7,11 +7,14 @@ import numpy as np
 labels_filename=sys.argv[1]
 out_f=sys.argv[2]
 in_prefix=sys.argv[3]
+numrows_in_labelfile=int(sys.argv[4])
 print(str(sys.argv))
 
 #read in the labels
-labels=np.loadtxt(labels_filename,skiprows=1,usecols=range(1,44),dtype=int)
+labels=np.loadtxt(labels_filename,skiprows=1,usecols=range(1,numrows_in_labelfile),dtype=int)
 label_pos=np.loadtxt(labels_filename,skiprows=1,usecols=range(0,1),dtype=object)
+
+
 numtasks=labels.shape[1]
 positions=dict()
 for i in range(label_pos.shape[0]):

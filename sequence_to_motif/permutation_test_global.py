@@ -26,7 +26,7 @@ def parse_args():
     parser.add_argument("--reference",help="reference fasta file for whole genome. i.e. hg19.fa")
     parser.add_argument("--out_prefix",help="output file prefix")
     parser.add_argument("--permuted_reference",help="permuted genome in bins of 1kb, also a fasta file i.e. hg19.permuted.fa")
-    parser.add_argument("--pwm",type=str,nargs="+",help="list of pwm files (separated by space)")
+    parser.add_argument("--pwm",type=str,help="list of pwm files (separated by space)")
     parser.add_argument("--p_val",type=float,help="p-value cutoff for motif calling")
     parser.add_argument('--foreground_freqs',help='file containing the background allele frequencies,will be computed on the fly if not provided,allele frequencies are tab-delimited in order of A, C, G, T. i.e. 0.22 0.28 0.28 0.22')
     parser.add_argument('--test_to_perform',help='one of hist,fdr,score_cutoff')
@@ -88,9 +88,9 @@ def main():
     print('computed base frequencies in foreground')
 
     #load the pwm 
-    matrix_file_names=args.pwm
+    matrix_file_names=open(args.pwm,'r').read().strip().split('\n') 
     matrices=[]
-    motif_names=[matrix_file_name.split('.')[0] for matrix_file_name in matrix_file_names]
+    motif_names=[matrix_file_name for matrix_file_name in matrix_file_names]
     for matrix_file_name in matrix_file_names:
         if args.freqs==False:
             #input matrices are in pwm format
@@ -193,18 +193,23 @@ def main():
         elif args.test_to_perform=="score_cutoff":
             min_score_for_good_fdr=float("inf")
             score_keys=list(set(distribution_original[motif_index].keys()).union(set(distribution_permuted[motif_index].keys())))
-            for key in score_keys:
-                original_hits=0
-                permuted_hits=0
-                if key in distribution_original[motif_index]: 
-                    original_hits=distribution_original[motif_index][key]
-                if key in distribution_permuted[motif_index]: 
-                    permuted_hits=distribution_permuted[motif_index][key]
-                fdr_val=permuted_hits/(1.0*(permuted_hits+original_hits))
-                if fdr_val <= args.fdr_thresh:
-                    if key < min_score_for_good_fdr:
-                        min_score_for_good_fdr=key
-                        print(str(fdr_val))
+            cur_fdr_thresh=args.fdr_thresh
+            while (min_score_for_good_fdr==float("inf")) and (cur_fdr_thresh < 1): 
+                for key in score_keys:
+                    original_hits=0
+                    permuted_hits=0
+                    if key in distribution_original[motif_index]: 
+                        original_hits=distribution_original[motif_index][key]
+                    if key in distribution_permuted[motif_index]: 
+                        permuted_hits=distribution_permuted[motif_index][key]
+                    fdr_val=permuted_hits/(1.0*(permuted_hits+original_hits))
+                    if fdr_val <= args.fdr_thresh:
+                        if key < min_score_for_good_fdr:
+                            min_score_for_good_fdr=key
+                            print(str(fdr_val))
+                if min_score_for_good_fdr==float("inf"): 
+                    cur_fdr_thresh=min(1.0,cur_fdr_thresh+0.1)
+                    print("cur_fdr_thresh:"+str(cur_fdr_thresh)) 
             #we have found the score threshold, now scan the non-permuted genome at that threshold & compute the number of hits.
             scanner = MOODS.scan.Scanner(7)
             scanner.set_motifs([matrices[motif_index]],fg_freqs, [min_score_for_good_fdr],)
@@ -213,7 +218,7 @@ def main():
                 seq=reference.fetch(entry[0],int(entry[1]),int(entry[2]))
                 hits_original=scanner.scan(seq)[0]
                 num_hits_above_min_score+=len(hits_original)
-            outf.write(motif_names[motif_index].split('/')[-1]+'\t'+str(args.p_val)+'\t'+str(args.fdr_thresh)+'\t'+str(min_score_for_good_fdr)+'\t'+str(num_hits_above_min_score)+'\n')        
+            outf.write(motif_names[motif_index].split('/')[-1]+'\t'+str(args.p_val)+'\t'+str(cur_fdr_thresh)+'\t'+str(min_score_for_good_fdr)+'\t'+str(num_hits_above_min_score)+'\n')        
 
         else:
             #we want to find the score cutoff         
