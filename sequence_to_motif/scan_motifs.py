@@ -13,7 +13,7 @@ import pdb
 
 def parse_args():
     parser=argparse.ArgumentParser(description='provide a director of PWM motif files and source fasta file as well the interval sizes to scan')
-    parser.add_argument('--pwm_dir',help='directory of PWM files to process')
+    parser.add_argument('--pwm_list',help='file containing list of directories to all pwms to use, see example pwm_list_cisbp.txt in this repository')
     parser.add_argument('--reference',help='reference fasta file')
     parser.add_argument('--out_prefix',help='output file prefix')
     parser.add_argument('--chrom_sizes',help='file containing sizes of chromosomes')
@@ -28,7 +28,9 @@ def parse_args():
     parser.add_argument('--labels_for_hdf5',help="filename containing the labels file to use for \"y\" when storing the output in hdf5 compatible with momma_dragonn")
     parser.add_argument('--numlabels_for_hdf5',type=int,help="number of labels present in associated labels file") 
     parser.add_argument('--thresholds',help="file containing motif name to threshold mapping")
-    parser.add_argument('--position_bin_size',type=int,help="bin size for scanning the positions file, if we want to record positional information",default=None) 
+    parser.add_argument('--position_bin_size',type=int,help="bin size for scanning the positions file, if we want to record positional information",default=None)
+    parser.add_argument('--freqs',help="use this flag if you are providing a matrix of frequencies rather than a PWM",action='store_true')
+    parser.add_argument('--pseudocount',type=float,help="pseudocount to add when providing a matrix of frequency values rather than a PWM",default=1e-4)
     return parser.parse_args()
 
 #helper function to convert numpy array to tuple (MOODS needs tuples for scanning)
@@ -269,11 +271,18 @@ def main():
 
 
     #get the matrix files
-    matrix_file_names=['/'.join([args.pwm_dir,i]) for i in os.listdir(args.pwm_dir) if i.endswith('.pwm')]
+    matrix_file_names=open(args.pwm_list,'r').read().strip().split('\n') 
+    matrices=[]
+    motif_names=[matrix_file_name for matrix_file_name in matrix_file_names]
+    for matrix_file_name in matrix_file_names:
+        if args.freqs==False:
+            #input matrices are in pwm format
+            matrices.append(totuple(np.transpose(np.loadtxt(matrix_file_name,skiprows=1))))
+        else:
+            #input matrices are provided as frequency tables
+            matrices.append(MOODS.parsers.pfm_to_log_odds(matrix_file_name,bg,args.pseudocount))
 
     #parse the pwm matrices 
-    matrices=[totuple(np.transpose(np.loadtxt(f,skiprows=1))) for f in matrix_file_names]
-    motif_names=matrix_file_names
     num_motifs=len(matrices)
     
     #get the p-value cutoff thresholds

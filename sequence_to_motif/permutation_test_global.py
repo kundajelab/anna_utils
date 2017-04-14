@@ -98,7 +98,7 @@ def main():
         else:
             #input matrices are provided as frequency tables
             matrices.append(MOODS.parsers.pfm_to_log_odds(matrix_file_name,fg_freqs,args.pseudocount))
-    print("read in motifs of interest:"+str(motif_names))
+    #print("read in motifs of interest:"+str(motif_names))
 
     thresholds=[MOODS.tools.threshold_from_p(matrix,fg_freqs,float(args.p_val)) for matrix in matrices]
 

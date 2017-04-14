@@ -9,7 +9,7 @@
 
 
 #Nadine's project
-python scan_motifs.py --pwm_dir=pwm --reference hg19/hg19.genome.fa --out_prefix nadine_heme_project --chrom_sizes hg19/hg19.chrom.sizes  --num_hits_per_motif 1 --p_val 0.00005 --positions_bed nadine_bed_file.padded.txt --binarize --thresholds fdr0.2.pval.0.00005.nadine_data.score_cutoffs.tsv 
+#python scan_motifs.py --pwm_dir=pwm --reference hg19/hg19.genome.fa --out_prefix nadine_heme_project --chrom_sizes hg19/hg19.chrom.sizes  --num_hits_per_motif 1 --p_val 0.00005 --positions_bed nadine_bed_file.padded.txt --binarize --thresholds fdr0.2.pval.0.00005.nadine_data.score_cutoffs.tsv 
 
 #heterokaryon scan (training) 
 ##python scan_motifs.py --pwm_dir=pwm --reference /mnt/data/annotations/by_release/heterokaryon_hg19_mm9_WOALTERNATE/WOALTERNATES/hg19_mm9_phix_WOALTERNATES.fa --out_prefix het.train --chrom_sizes hg19_mm9_phix_WOALTERNATES.chrom.sizes  --background_freqs fdr0.2.pval.0.00005.heterokaryon_data.foreground_freqs.txt --num_hits_per_motif 3 --p_val 0.00005 --positions_bed het.train.txt --thresholds fdr0.2.pval.0.00005.heterokaryon_data.score_cutoffs.tsv --position_bin_size 250 --dump_hdf5 --labels_for_hdf5 /srv/scratch/annashch/deeplearning/heterokaryon/inputs/new.labels.txt --numlabels_for_hdf5 43
@@ -52,6 +52,14 @@ python scan_motifs.py --pwm_dir=pwm --reference hg19/hg19.genome.fa --out_prefix
 #for medusa -- DIFFERENTIAL
 #python scan_motifs.py --pwm_dir=pwm --reference /mnt/data/annotations/by_release/heterokaryon_hg19_mm9_WOALTERNATE/WOALTERNATES/hg19_mm9_phix_WOALTERNATES.fa --out_prefix het.medusa.differential --chrom_sizes hg19_mm9_phix_WOALTERNATES.chrom.sizes  --background_freqs fdr0.2.pval.0.00005.heterokaryon_data.foreground_freqs.txt --num_hits_per_motif 1 --p_val 0.00005 --positions_bed het_peaks_medusa_differential.bed --thresholds fdr0.2.pval.0.00005.heterokaryon_data.score_cutoffs.tsv --binarize
 
-
-
 #python scan_motifs.py --pwm_dir pwm --reference hg19/hg19.genome.fa --out_prefix dmso.labels --chrom_sizes hg19/hg19.chrom.sizes --background_freqs fdr0.2.pval.0.00005.dmso_data.foreground_freqs.txt --num_hits_per_motif 1 --p_val 0.00005 --positions_bed dmso.labels.txt --thresholds fdr0.2.pval.0.00005.dmso_data.score_cutoffs.tsv
+
+#THIS IS USING THE CISBP MOTIF SET
+#Peyton peak set
+
+#nadine_binary_test_april12
+#python scan_motifs.py --pwm_list pwm_list_cisbp.txt  --positions_bed peaks_nadine_binary_test_april12.bed --reference hg19/hg19.genome.fa --out_prefix scan_nadine_binary_test_april12 --chrom_sizes hg19/hg19.chrom.sizes --num_hits_per_motif 1 --p_val 0.00005 --thresholds thresholds_nadine_binary_test_april12.score_cutoffs.tsv  --freqs 
+
+#nadine_diff_wrt_HSC_april4_240k.bed
+python scan_motifs.py --pwm_list pwm_list_cisbp.txt --positions_bed peaks_nadine_diff_wrt_HSC_april4_240K.bed --reference hg19/hg19.genome.fa --out_prefix scan_nadine_diff_wrt_HSC_april4_240k --chrom_sizes hg19/hg19.chrom.sizes --num_hits_per_motif 1 --p_val 0.00005 --thresholds thresholds_nadine_diff_wrt_HSC_april4_240K.score_cutoffs.tsv --freqs
+
