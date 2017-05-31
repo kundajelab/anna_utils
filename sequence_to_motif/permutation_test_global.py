@@ -214,6 +214,7 @@ def main():
             scanner = MOODS.scan.Scanner(7)
             scanner.set_motifs([matrices[motif_index]],fg_freqs, [min_score_for_good_fdr],)
             num_hits_above_min_score=0
+            print("foreground entries:"+str(len(foreground)))
             for entry in foreground:
                 seq=reference.fetch(entry[0],int(entry[1]),int(entry[2]))
                 hits_original=scanner.scan(seq)[0]

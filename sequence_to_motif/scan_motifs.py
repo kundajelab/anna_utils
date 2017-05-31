@@ -99,7 +99,6 @@ def bin_motif_hits(bins_cur_motif,results_cur_motif,num_hits_per_motif):
         hit_dict[bin].sort(reverse=True)
         hit_dict[bin]=hit_dict[bin]+[0]*(num_hits_per_motif-len(hit_dict[bin]))
         hit_dict[bin]=hit_dict[bin][0:num_hits_per_motif]
-    #print(str(hit_dict))
     return hit_dict 
 
 def global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_names,output_dir):         
@@ -111,12 +110,12 @@ def global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_n
     for chrom in chroms:
         print("scanning:"+str(chrom))
         #pre-allocate the output numpy array with zeros
-        num_sequence_bins=chrom_sizes[chrom]/args.bin_size
+        num_sequence_bins=chrom_sizes[chrom]/args.reference_bin_size
         chrom_motif_mat=np.zeros((num_sequence_bins,args.num_hits_per_motif*num_motifs))
         chrom_pos_mat=np.zeros((num_sequence_bins,2))
         
         pos_start=0
-        pos_end=pos_start+args.bin_size
+        pos_end=pos_start+args.reference_bin_size
         bin_index=0 
         while pos_end < chrom_sizes[chrom]:
             if pos_start%1000000==0: 
@@ -142,7 +141,7 @@ def global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_n
             chrom_pos_mat[bin_index][1]=pos_end                                 
             #update indices 
             pos_start=pos_end
-            pos_end=pos_start+args.bin_size
+            pos_end=pos_start+args.reference_bin_size
             bin_index+=1
 
         #save output numpy pickles for the chromosome
@@ -199,16 +198,16 @@ def scan_specified_positions(args,positions,num_motifs,scanner,thresholds,refere
         if peak_index%100==0:
             print(str(peak_index)+"/"+str(num_peaks))
         seq=reference.fetch(position[0],int(position[1]),int(position[2]))
+        #pdb.set_trace() 
         if len(position)>3:
             #add the mutation!
             varpos=int(math.ceil(len(seq)/2.0)-1)
             endpos=len(seq)
             seq=seq[0:varpos]+position[3]+seq[varpos+1:endpos]
-        #print(str(seq))
         results=scanner.scan(seq)
-        #print("results:"+str(results))
         for motif_index in range(num_motifs):
             results_cur_motif=[r.score for r in results[motif_index]]
+            print(str(len(results_cur_motif))) 
             bins_cur_motif=[r.pos/position_bin_size for r in results[motif_index]]
             #get a dictionary of bins to scores
             score_dict=bin_motif_hits(bins_cur_motif,results_cur_motif,args.num_hits_per_motif)
