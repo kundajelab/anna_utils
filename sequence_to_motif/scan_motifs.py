@@ -72,6 +72,7 @@ def calculate_bg_from_scratch(reference,positions_bed_file):
 
 def parse_background_freqs(background_freqs_file):
     data=open(background_freqs_file,'r').read().strip().split('\n')
+    pdb.set_trace() 
     bg_freqs=[0,0,0,0]
     for line in data:
         tokens=line.split('\t')
@@ -275,6 +276,7 @@ def main():
 
     if args.background_freqs!=None:
         bg = parse_background_freqs(args.background_freqs)
+        pdb.set_trace() 
     else:
         print("No background_freqs argument provided, computing frequencies from positions_bed argument") 
         bg = calculate_bg_from_scratch(reference,args.positions_bed)
@@ -300,6 +302,7 @@ def main():
     thresholds=get_thresholds(args,matrices,bg,motif_names)
     #create the moods scanner
     scanner = MOODS.scan.Scanner(7)
+    pdb.set_trace() 
     scanner.set_motifs(matrices, bg, thresholds, )
     print('read in motif matrices and thresholds')
 

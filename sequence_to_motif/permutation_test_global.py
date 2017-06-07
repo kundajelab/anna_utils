@@ -90,10 +90,14 @@ def main():
         fg_freqs=[float(i) for i in open(args.foreground_freqs,'r').read().strip().split('\t')]
     print('computed base frequencies in foreground')
 
-    #load the pwm 
+    #load the pwm
+    #import IPython
+    #IPython.embed()	 
     matrix_file_names=open(args.pwm,'r').read().strip().split('\n') 
     matrices=[]
     motif_names=[matrix_file_name for matrix_file_name in matrix_file_names]
+    import IPython
+    IPython.embed()
     for matrix_file_name in matrix_file_names:
         if args.freqs==False:
             #input matrices are in pwm format
@@ -217,6 +221,7 @@ def main():
             #we have found the score threshold, now scan the non-permuted genome at that threshold & compute the number of hits.
             scanner = MOODS.scan.Scanner(7)
             scanner.set_motifs([matrices[motif_index]],fg_freqs, [min_score_for_good_fdr],)
+            pdb.set_trace() 
             num_hits_above_min_score=0
             for entry in foreground:
                 seq=reference.fetch(entry[0],int(entry[1]),int(entry[2]))
