@@ -37,7 +37,7 @@ def parse_args():
 
 #parses the provided foreground bed file
 def parse_foreground(foreground_file):
-    foreground=open(foreground_file,'r').read().strip().split('\n')
+    foreground=open(foreground_file,'r').read().strip().replace(":","\t").replace("-","\t").split('\n')
     foreground=[entry.split('\t') for entry in foreground]
     return foreground
 
@@ -58,7 +58,10 @@ def compute_base_freqs(reference,foreground,out_prefix):
         frequencies[3]+=numT
     frequencies=[float(i)/numbases for i in frequencies]
     outf=open(out_prefix+".foreground_freqs.txt",'w')
-    outf.write('\t'.join([str(i) for i in frequencies]))
+    outf.write('A\t'+str(frequencies[0])+'\n')
+    outf.write('C\t'+str(frequencies[1])+'\n')
+    outf.write('G\t'+str(frequencies[2])+'\n')
+    outf.write('T\t'+str(frequencies[3])+'\n')
     print("computed foreground!") 
     return frequencies
 
@@ -97,9 +100,10 @@ def main():
             matrices.append(totuple(np.transpose(np.loadtxt(matrix_file_name,skiprows=1))))
         else:
             #input matrices are provided as frequency tables
+            #pdb.set_trace() 
             matrices.append(MOODS.parsers.pfm_to_log_odds(matrix_file_name,fg_freqs,args.pseudocount))
-    #print("read in motifs of interest:"+str(motif_names))
-
+    print("read in motifs of interest:"+str(motif_names))
+    
     thresholds=[MOODS.tools.threshold_from_p(matrix,fg_freqs,float(args.p_val)) for matrix in matrices]
 
     #initalize the MOODS scanner 
@@ -214,7 +218,6 @@ def main():
             scanner = MOODS.scan.Scanner(7)
             scanner.set_motifs([matrices[motif_index]],fg_freqs, [min_score_for_good_fdr],)
             num_hits_above_min_score=0
-            print("foreground entries:"+str(len(foreground)))
             for entry in foreground:
                 seq=reference.fetch(entry[0],int(entry[1]),int(entry[2]))
                 hits_original=scanner.scan(seq)[0]

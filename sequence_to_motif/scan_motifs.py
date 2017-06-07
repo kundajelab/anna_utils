@@ -30,6 +30,7 @@ def parse_args():
     parser.add_argument('--thresholds',help="file containing motif name to threshold mapping")
     parser.add_argument('--position_bin_size',type=int,help="bin size for scanning the positions file, if we want to record positional information",default=None)
     parser.add_argument('--freqs',help="use this flag if you are providing a matrix of frequencies rather than a PWM",action='store_true')
+    parser.add_argument('--totext',help="store results in a text file of motif to scores",action='store_true')
     parser.add_argument('--pseudocount',type=float,help="pseudocount to add when providing a matrix of frequency values rather than a PWM",default=1e-4)
     return parser.parse_args()
 
@@ -52,7 +53,7 @@ def parse_chrom_sizes(chrom_sizes_file):
 def calculate_bg_from_scratch(reference,positions_bed_file):
     bg_freqs=[0,0,0,0]
     numbases=0
-    positions_bed=open(positions_bed_file,'r').read().strip().split('\n')
+    positions_bed=open(positions_bed_file,'r').read().strip().replace(':','\t').replace('-','\t').split('\n')
     positions_bed=[entry.split('\t') for entry in positions_bed]
     for region in positions_bed:
         seq=(reference.fetch(region[0],int(region[1]),int(region[2]))).lower()
@@ -99,6 +100,7 @@ def bin_motif_hits(bins_cur_motif,results_cur_motif,num_hits_per_motif):
         hit_dict[bin].sort(reverse=True)
         hit_dict[bin]=hit_dict[bin]+[0]*(num_hits_per_motif-len(hit_dict[bin]))
         hit_dict[bin]=hit_dict[bin][0:num_hits_per_motif]
+    #print(str(hit_dict))
     return hit_dict 
 
 def global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_names,output_dir):         
@@ -110,12 +112,12 @@ def global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_n
     for chrom in chroms:
         print("scanning:"+str(chrom))
         #pre-allocate the output numpy array with zeros
-        num_sequence_bins=chrom_sizes[chrom]/args.reference_bin_size
+        num_sequence_bins=chrom_sizes[chrom]/args.bin_size
         chrom_motif_mat=np.zeros((num_sequence_bins,args.num_hits_per_motif*num_motifs))
         chrom_pos_mat=np.zeros((num_sequence_bins,2))
         
         pos_start=0
-        pos_end=pos_start+args.reference_bin_size
+        pos_end=pos_start+args.bin_size
         bin_index=0 
         while pos_end < chrom_sizes[chrom]:
             if pos_start%1000000==0: 
@@ -141,7 +143,7 @@ def global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_n
             chrom_pos_mat[bin_index][1]=pos_end                                 
             #update indices 
             pos_start=pos_end
-            pos_end=pos_start+args.reference_bin_size
+            pos_end=pos_start+args.bin_size
             bin_index+=1
 
         #save output numpy pickles for the chromosome
@@ -153,7 +155,10 @@ def global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_n
         
 def scan_specified_positions(args,positions,num_motifs,scanner,thresholds,reference,motif_names,output_dir):
     num_peaks=len(positions)
-    seq_length=int(positions[0][2])-int(positions[0][1])
+    try:
+        seq_length=int(positions[0][2])-int(positions[0][1])
+    except:
+        pdb.set_trace() 
     #handle case when we want to encode positional info!
     if args.position_bin_size!=None:
         #figure out how many bins needed to parse full sequence
@@ -197,17 +202,18 @@ def scan_specified_positions(args,positions,num_motifs,scanner,thresholds,refere
         #scan!
         if peak_index%100==0:
             print(str(peak_index)+"/"+str(num_peaks))
+        print(str(position))
         seq=reference.fetch(position[0],int(position[1]),int(position[2]))
-        #pdb.set_trace() 
         if len(position)>3:
             #add the mutation!
             varpos=int(math.ceil(len(seq)/2.0)-1)
             endpos=len(seq)
             seq=seq[0:varpos]+position[3]+seq[varpos+1:endpos]
+        #print(str(seq))
         results=scanner.scan(seq)
+        #print("results:"+str(results))
         for motif_index in range(num_motifs):
             results_cur_motif=[r.score for r in results[motif_index]]
-            print(str(len(results_cur_motif))) 
             bins_cur_motif=[r.pos/position_bin_size for r in results[motif_index]]
             #get a dictionary of bins to scores
             score_dict=bin_motif_hits(bins_cur_motif,results_cur_motif,args.num_hits_per_motif)
@@ -225,6 +231,12 @@ def scan_specified_positions(args,positions,num_motifs,scanner,thresholds,refere
         print("closing hdf5") 
         outf.flush()
         outf.close()
+    elif args.totext==True:
+        outf=open(output_dir+"/"+"motif_hits.txt",'w')
+        outf.write("Chrom\tPeakStart\tPeakEnd\t"+'\t'.join(motif_names)+'\n')
+        numrows=motif_mat.shape[0]
+        for r in range(numrows):
+            outf.write('\t'.join(positions[r])+'\t'+'\t'.join([str(i) for i in motif_mat[r,:]])+'\n')
     else:
         print("saving output numpy arrays") 
         #save the output numpy pickle
@@ -233,7 +245,7 @@ def scan_specified_positions(args,positions,num_motifs,scanner,thresholds,refere
         #np.save("/".join([output_dir,"pos"]),pos_mat)
         outf_names=open(output_dir+'/motif_names.txt','w')
         outf_names.write('\n'.join(motif_names))
-
+        
 def get_thresholds(args,matrices,bg,motif_names):
     #check to see if the user provided a file of thresholds:
     if args.thresholds!=None:
@@ -302,7 +314,7 @@ def main():
     if args.positions_bed==None:
         global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_names,output_dir)
     else:
-        positions=[i.split('\t') for i in open(args.positions_bed,'r').read().strip().split('\n')]
+        positions=[i.split('\t') for i in open(args.positions_bed,'r').read().strip().replace(":","\t").replace("-","\t").split('\n')]
         scan_specified_positions(args,positions,num_motifs,scanner,thresholds,reference,motif_names,output_dir)
 
 
