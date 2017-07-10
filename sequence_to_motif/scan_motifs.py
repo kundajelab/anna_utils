@@ -35,6 +35,23 @@ def parse_args():
     return parser.parse_args()
 
 #helper function to convert numpy array to tuple (MOODS needs tuples for scanning)
+def revcomp(seq):
+    revcomp=""
+    seq=seq.upper() 
+    seq=seq[::-1] #reverse
+    for char in seq: 
+        if char=="A":
+            revcomp=revcomp+"T"
+        elif char=="T":
+            revcomp=revcomp+"A"
+        elif char=="C":
+            revcomp=revcomp+"G"
+        elif char=="G":
+            revcomp=revcomp+"C"
+        else:
+            revcomp=revcomp+char        
+    return revcomp
+
 def totuple(a):
     try:
         return tuple(totuple(i) for i in a)
@@ -115,6 +132,9 @@ def global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_n
         num_sequence_bins=chrom_sizes[chrom]/args.bin_size
         chrom_motif_mat=np.zeros((num_sequence_bins,args.num_hits_per_motif*num_motifs))
         chrom_pos_mat=np.zeros((num_sequence_bins,2))
+
+        chrom_revcomp_motif_mat=np.zeros((num_sequence_bins,args.num_hits_per_motif*num_motifs))
+        chrom_revcomp_pos_mat=np.zeros((num_sequence_bins,2))
         
         pos_start=0
         pos_end=pos_start+args.bin_size
@@ -140,7 +160,26 @@ def global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_n
                 else:
                     chrom_motif_mat[bin_index,motif_index*args.num_hits_per_motif:(motif_index+1)*args.num_hits_per_motif]=[int(m>thresholds[motif_index])for m in results_cur_motif]
             chrom_pos_mat[bin_index][0]=pos_start
-            chrom_pos_mat[bin_index][1]=pos_end                                 
+            chrom_pos_mat[bin_index][1]=pos_end
+
+            #Repeat for the reverse complement
+            seq_revcomp=revcomp(seq)
+            results=scanner.scan(seq_revcomp)
+            for motif_index in range(num_motifs):
+                #get the top n scores for each motif
+                results_cur_motif=[r.score for r in results[motif_index]]
+                results_cur_motif.sort(reverse=True)
+                #pad to the desired length
+                results_cur_motif+=[0]*(args.num_hits_per_motif-len(results_cur_motif))
+                #truncate to the desired length
+                results_cur_motif=results_cur_motif[0:args.num_hits_per_motif]
+                if args.binarize==False:
+                    chrom_revcomp_motif_mat[bin_index,motif_index*args.num_hits_per_motif:(motif_index+1)*args.num_hits_per_motif]=results_cur_motif
+                else:
+                    chrom_revcomp_motif_mat[bin_index,motif_index*args.num_hits_per_motif:(motif_index+1)*args.num_hits_per_motif]=[int(m>thresholds[motif_index])for m in results_cur_motif]
+            chrom_revcomp_pos_mat[bin_index][0]=pos_start
+            chrom_revcomp_pos_mat[bin_index][1]=pos_end
+            
             #update indices 
             pos_start=pos_end
             pos_end=pos_start+args.bin_size
@@ -149,6 +188,10 @@ def global_scan(args,chrom_sizes,num_motifs,scanner,thresholds,reference,motif_n
         #save output numpy pickles for the chromosome
         np.save("/".join([output_dir,".".join([chrom,"mat"])]),chrom_motif_mat)
         np.save("/".join([output_dir,".".join([chrom,"pos"])]),chrom_pos_mat)
+        np.save("/".join([output_dir,".".join([chrom,"mat.revcomp"])]),chrom_revcomp_motif_mat)
+        np.save("/".join([output_dir,".".join([chrom,"pos.revcomp"])]),chrom_revcomp_pos_mat)
+
+        
         outf_names=open(output_dir+'/motif_names.txt','w')
         outf_names.write('\n'.join(motif_names))
         print("finished processing chromosome:"+str(chrom))
@@ -193,10 +236,13 @@ def scan_specified_positions(args,positions,num_motifs,scanner,thresholds,refere
 
         outf=h5py.File(args.out_prefix+".hdf5",'w')
         motif_mat=outf.create_dataset("X/sequence",data=np.zeros((num_peaks,args.num_hits_per_motif*num_motifs*num_bins_per_sequence)),chunks=True)
+        revcomp_motif_mat=outf.create_dataset("X/revcomp_sequence",data=np.zeros((num_peaks,args.num_hits_per_motif*num_motifs*num_bins_per_sequence)),chunks=True)
         out_labels=outf.create_dataset("Y/output",data=label_mat,chunks=True)
         print("wrote labels to hdf5")
     else:
         motif_mat=np.zeros((num_peaks,args.num_hits_per_motif*num_motifs*num_bins_per_sequence))
+        revcomp_motif_mat=np.zeros((num_peaks,args.num_hits_per_motif*num_motifs*num_bins_per_sequence))
+        
     peak_index=0 
     for position in positions:
         #scan!
@@ -209,9 +255,7 @@ def scan_specified_positions(args,positions,num_motifs,scanner,thresholds,refere
             varpos=int(math.ceil(len(seq)/2.0)-1)
             endpos=len(seq)
             seq=seq[0:varpos]+position[3]+seq[varpos+1:endpos]
-        #print(str(seq))
         results=scanner.scan(seq)
-        #print("results:"+str(results))
         for motif_index in range(num_motifs):
             results_cur_motif=[r.score for r in results[motif_index]]
             bins_cur_motif=[r.pos/position_bin_size for r in results[motif_index]]
@@ -225,6 +269,23 @@ def scan_specified_positions(args,positions,num_motifs,scanner,thresholds,refere
                     motif_mat[peak_index,insert_start:insert_end]=score_dict[cur_bin]
                 else:
                     motif_mat[peak_index,insert_start:insert_end]=[int(m>thresholds[motif_index])for m in score_dict[cur_bin]]
+        #repeat for reverse complement
+        seq=revcomp(seq)
+        results=scanner.scan(seq)
+        for motif_index in range(num_motifs):
+            results_cur_motif=[r.score for r in results[motif_index]]
+            bins_cur_motif=[r.pos/position_bin_size for r in results[motif_index]]
+            #get a dictionary of bins to scores
+            score_dict=bin_motif_hits(bins_cur_motif,results_cur_motif,args.num_hits_per_motif)
+            for cur_bin in score_dict:
+                insert_start=motif_index*args.num_hits_per_motif*num_bins_per_sequence+(args.num_hits_per_motif*cur_bin)
+                insert_end=motif_index*args.num_hits_per_motif*num_bins_per_sequence+(args.num_hits_per_motif*(cur_bin+1))
+                #print(str(insert_start)+":"+str(insert_end))
+                if args.binarize==False:
+                    revcomp_motif_mat[peak_index,insert_start:insert_end]=score_dict[cur_bin]
+                else:
+                    revcomp_motif_mat[peak_index,insert_start:insert_end]=[int(m>thresholds[motif_index])for m in score_dict[cur_bin]]
+        
         peak_index+=1
         
     if args.dump_hdf5==True:
@@ -234,17 +295,20 @@ def scan_specified_positions(args,positions,num_motifs,scanner,thresholds,refere
     elif args.totext==True:
         outf=open(output_dir+"/"+"motif_hits.txt",'w')
         outf.write("Chrom\tPeakStart\tPeakEnd\t"+'\t'.join(motif_names)+'\n')
+        outf_revcomp=open(output_dir+'/'+"motif_hits.revcomp.txt",'w')
+        outf_revcomp.write("Chrom\tPeakStart\tPeakEnd\t"+'\t'.join(motif_names)+'\n')
+        
         numrows=motif_mat.shape[0]
         for r in range(numrows):
             outf.write('\t'.join(positions[r])+'\t'+'\t'.join([str(i) for i in motif_mat[r,:]])+'\n')
+            outf_revcomp.write('\t'.join(positions[r])+'\t'+'\t'.join([str(i) for i in revcomp_motif_mat[r,:]])+'\n')
     else:
         print("saving output numpy arrays") 
-        #save the output numpy pickle
-        #save output numpy pickles for the chromosome
         np.save("/".join([output_dir,"mat"]),motif_mat)
-        #np.save("/".join([output_dir,"pos"]),pos_mat)
+        np.save("/".join([output_dir,"revcomp_mat"]),revcomp_motif_mat)
         outf_names=open(output_dir+'/motif_names.txt','w')
         outf_names.write('\n'.join(motif_names))
+        
         
 def get_thresholds(args,matrices,bg,motif_names):
     #check to see if the user provided a file of thresholds:
