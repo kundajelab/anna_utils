@@ -1,12 +1,74 @@
-#floating number motif scores 
-#python scan_motifs.py --pwm_list pwm_list_cisbp.txt --positions_bed Sox2_1_3_rep1-pr.IDR0.05.filt.12-col.bed  --reference /users/raunaq/chip-nexus-project/out_files/Sox2_2/moods_scan/sequence_to_motif/mm10/GRCm38.genome.fa --out_prefix DEBUG_moods_scan_sox2_all --chrom_sizes /mnt/data/annotations/by_release/mm10/mm10.male.chrom.sizes --num_hits_per_motif 1 --p_val 0.001  --freqs  --position_bin_size 1 --thresholds thresholds_sox2_mm10.score_cutoffs.tsv
+#genome-wide scan 
+#for chrom in `seq 1 22` X Y M
+#do
+    #python scan_motifs.py --pwm_dir=pwm --reference hg19/hg19.genome.fa --out_prefix hocomocov10_hg19_1kb_S_by_M  --chrom_sizes hg19/hg19.chrom.sizes --background_freqs hg19_background_freqs.txt --chrom chr$chrom --num_hits_per_motif 1 &
+    #python scan_motifs.py --pwm_dir=pwm --reference hg19/hg19.genome.fa --out_prefix hocomocov10_hg19_1kb_S_by_M  --chrom_sizes hg19/hg19.chrom.sizes --background_freqs hg19_background_freqs.txt --chrom chr$chrom --num_hits_per_motif 1 --p_val 0.0001 &
+    #python scan_motifs.py --pwm_dir=pwm --reference hg19/hg19.genome.fa --out_prefix hocomocov10_hg19_1kb_S_by_M  --chrom_sizes hg19/hg19.chrom.sizes --background_freqs hg19_background_freqs.txt --chrom chr$chrom --num_hits_per_motif 3 &
+    #python scan_motifs.py --pwm_dir=pwm --reference hg19/hg19.genome.fa --out_prefix hocomocov10_hg19_1kb_S_by_M  --chrom_sizes hg19/hg19.chrom.sizes --background_freqs hg19_background_freqs.txt --chrom chr$chrom --num_hits_per_motif 3 --p_val 0.0001 
+#done
 
-#binarized motif scores 
-#python scan_motifs.py --pwm_list pwm_list_cisbp.txt --positions_bed Sox2_1_3_rep1-pr.IDR0.05.filt.12-col.bed  --reference /mnt/data/annotations/by_release/mm10/GRCm38.genome.fa --out_prefix moods_scan_sox2_binarized_all --chrom_sizes /mnt/data/annotations/by_release/mm10/mm10.male.chrom.sizes --num_hits_per_motif 1 --p_val 0.001  --freqs --position_bin_size 1 --thresholds thresholds_sox2_mm10.score_cutoffs.tsv --binarize
+
+#Nadine's project
+#python scan_motifs.py --pwm_dir=pwm --reference hg19/hg19.genome.fa --out_prefix nadine_heme_project --chrom_sizes hg19/hg19.chrom.sizes  --num_hits_per_motif 1 --p_val 0.00005 --positions_bed nadine_bed_file.padded.txt --binarize --thresholds fdr0.2.pval.0.00005.nadine_data.score_cutoffs.tsv 
+
+#heterokaryon scan (training) 
+##python scan_motifs.py --pwm_dir=pwm --reference /mnt/data/annotations/by_release/heterokaryon_hg19_mm9_WOALTERNATE/WOALTERNATES/hg19_mm9_phix_WOALTERNATES.fa --out_prefix het.train --chrom_sizes hg19_mm9_phix_WOALTERNATES.chrom.sizes  --background_freqs fdr0.2.pval.0.00005.heterokaryon_data.foreground_freqs.txt --num_hits_per_motif 3 --p_val 0.00005 --positions_bed het.train.txt --thresholds fdr0.2.pval.0.00005.heterokaryon_data.score_cutoffs.tsv --position_bin_size 250 --dump_hdf5 --labels_for_hdf5 /srv/scratch/annashch/deeplearning/heterokaryon/inputs/new.labels.txt --numlabels_for_hdf5 43
+
+#heterokaryon gscan (validation) 
+#python scan_motifs.py --pwm_dir=pwm --reference /mnt/data/annotations/by_release/heterokaryon_hg19_mm9_WOALTERNATE/WOALTERNATES/hg19_mm9_phix_WOALTERNATES.fa --out_prefix het.validate --chrom_sizes hg19_mm9_phix_WOALTERNATES.chrom.sizes  --background_freqs fdr0.2.pval.0.00005.heterokaryon_data.foreground_freqs.txt --num_hits_per_motif 3 --p_val 0.00005 --positions_bed het.validate.txt --thresholds fdr0.2.pval.0.00005.heterokaryon_data.score_cutoffs.tsv --position_bin_size 250 --dump_hdf5 --labels_for_hdf5 /srv/scratch/annashch/deeplearning/heterokaryon/inputs/new.labels.txt --numlabels_for_hdf5 43
+
+#heterokaryon scan (test) 
+#python scan_motifs.py --pwm_dir=pwm --reference /mnt/data/annotations/by_release/heterokaryon_hg19_mm9_WOALTERNATE/WOALTERNATES/hg19_mm9_phix_WOALTERNATES.fa --out_prefix het.test --chrom_sizes hg19_mm9_phix_WOALTERNATES.chrom.sizes  --background_freqs fdr0.2.pval.0.00005.heterokaryon_data.foreground_freqs.txt --num_hits_per_motif 3 --p_val 0.00005 --positions_bed het.test.txt --thresholds fdr0.2.pval.0.00005.heterokaryon_data.score_cutoffs.tsv --position_bin_size 250 --dump_hdf5 --labels_for_hdf5 /srv/scratch/annashch/deeplearning/heterokaryon/inputs/new.labels.txt --numlabels_for_hdf5 43
 
 
-#full set of chroms
-#python scan_motifs.py --pwm_list pwm_list_cisbp.txt  --reference /mnt/data/annotations/by_release/mm10/GRCm38.genome.fa --out_prefix moods_scan_sox2_genome_wide --chrom_sizes /mnt/data/annotations/by_release/mm10/mm10.male.chrom.sizes --num_hits_per_motif 1 --p_val 0.001  --freqs --position_bin_size 1 --thresholds thresholds_sox2_mm10.score_cutoffs.tsv --binarize --background_freqs thresholds_sox2_mm10.foreground_freqs.txt --reference_bin_size 1000
+#gecco scan training
+#python scan_motifs.py --pwm_dir pwm --reference hg19/hg19.genome.fa --out_prefix gecco.train --chrom_sizes hg19/hg19.chrom.sizes --background_freqs fdr0.2.pval.0.00005.gecco_data.foreground_freqs.txt --num_hits_per_motif 3 --p_val 0.00005 --positions_bed gecco.sampled.train.txt --thresholds fdr0.2.pval.0.00005.gecco_data.score_cutoffs.tsv --position_bin_size 250 --dump_hdf5 --labels_for_hdf5 /srv/scratch/annashch/deeplearning/gecco/inputs/gecco.sampled.labels.txt --numlabels_for_hdf5 61
 
-#only main chromosomes, global scan 
-python scan_motifs.py --pwm_list pwm_list_cisbp.txt  --reference /mnt/data/annotations/by_release/mm10/GRCm38.genome.fa --out_prefix moods_scan_sox2_genome_wide --chrom_sizes mm10.male.chrom.sizes.mainchromsonly --num_hits_per_motif 1 --p_val 0.001  --freqs --position_bin_size 1 --thresholds thresholds_sox2_mm10.score_cutoffs.tsv --background_freqs thresholds_sox2_mm10.foreground_freqs.txt --reference_bin_size 1000 
+#gecco scan validation
+#python scan_motifs.py --pwm_dir pwm --reference hg19/hg19.genome.fa --out_prefix gecco.validate --chrom_sizes hg19/hg19.chrom.sizes --background_freqs fdr0.2.pval.0.00005.gecco_data.foreground_freqs.txt --num_hits_per_motif 3 --p_val 0.00005 --positions_bed gecco.sampled.validate.txt --thresholds fdr0.2.pval.0.00005.gecco_data.score_cutoffs.tsv --position_bin_size 250 --dump_hdf5 --labels_for_hdf5 /srv/scratch/annashch/deeplearning/gecco/inputs/gecco.sampled.labels.txt --numlabels_for_hdf5 61
+
+#gecco scan test
+#python scan_motifs.py --pwm_dir pwm --reference hg19/hg19.genome.fa --out_prefix gecco.test --chrom_sizes hg19/hg19.chrom.sizes --background_freqs fdr0.2.pval.0.00005.gecco_data.foreground_freqs.txt --num_hits_per_motif 3 --p_val 0.00005 --positions_bed gecco.sampled.test.txt --thresholds fdr0.2.pval.0.00005.gecco_data.score_cutoffs.tsv --position_bin_size 250 --dump_hdf5 --labels_for_hdf5 /srv/scratch/annashch/deeplearning/gecco/inputs/gecco.sampled.labels.txt --numlabels_for_hdf5 61
+
+#dmso scan train
+#python scan_motifs.py --pwm_dir pwm --reference hg19/hg19.genome.fa --out_prefix dmso.train --chrom_sizes hg19/hg19.chrom.sizes --background_freqs fdr0.2.pval.0.00005.dmso_data.foreground_freqs.txt --num_hits_per_motif 3 --p_val 0.00005 --positions_bed dmso.train.txt --thresholds fdr0.2.pval.0.00005.dmso_data.score_cutoffs.tsv --position_bin_size 250 --dump_hdf5 --labels_for_hdf5 /srv/scratch/annashch/deeplearning/dmso/inputs/newNegativeSet.labels.txt --numlabels_for_hdf5 12
+
+
+#dmso scan validate
+#python scan_motifs.py --pwm_dir pwm --reference hg19/hg19.genome.fa --out_prefix dmso.validate --chrom_sizes hg19/hg19.chrom.sizes --background_freqs fdr0.2.pval.0.00005.dmso_data.foreground_freqs.txt --num_hits_per_motif 3 --p_val 0.00005 --positions_bed dmso.validate.txt --thresholds fdr0.2.pval.0.00005.dmso_data.score_cutoffs.tsv --position_bin_size 250 --dump_hdf5 --labels_for_hdf5 /srv/scratch/annashch/deeplearning/dmso/inputs/newNegativeSet.labels.txt --numlabels_for_hdf5 12
+
+
+#dmso scan test
+#python scan_motifs.py --pwm_dir pwm --reference hg19/hg19.genome.fa --out_prefix dmso.test --chrom_sizes hg19/hg19.chrom.sizes --background_freqs fdr0.2.pval.0.00005.dmso_data.foreground_freqs.txt --num_hits_per_motif 3 --p_val 0.00005 --positions_bed dmso.test.txt --thresholds fdr0.2.pval.0.00005.dmso_data.score_cutoffs.tsv --position_bin_size 250 --dump_hdf5 --labels_for_hdf5 /srv/scratch/annashch/deeplearning/dmso/inputs/newNegativeSet.labels.txt --numlabels_for_hdf5 12
+
+
+#positions 
+#python scan_motifs.py --pwm_dir pwm --reference hg19/hg19.genome.fa --out_prefix gecco.deeplift.vars --chrom_sizes hg19/hg19.chrom.sizes --background_freqs fdr0.2.pval.0.00005.gecco_data.foreground_freqs.txt --num_hits_per_motif 3 --p_val 0.00005 --positions_bed ref.seq.inputs.gdl --thresholds fdr0.2.pval.0.00005.gecco_data.score_cutoffs.tsv --position_bin_size 250 
+
+
+#for medusa-- PRESENCE 
+#python scan_motifs.py --pwm_dir=pwm --reference /mnt/data/annotations/by_release/heterokaryon_hg19_mm9_WOALTERNATE/WOALTERNATES/hg19_mm9_phix_WOALTERNATES.fa --out_prefix het.medusa.presence --chrom_sizes hg19_mm9_phix_WOALTERNATES.chrom.sizes  --background_freqs fdr0.2.pval.0.00005.heterokaryon_data.foreground_freqs.txt --num_hits_per_motif 1 --p_val 0.00005 --positions_bed het_peaks_medusa_presence.bed --thresholds fdr0.2.pval.0.00005.heterokaryon_data.score_cutoffs.tsv --binarize
+
+#for medusa -- DIFFERENTIAL
+#python scan_motifs.py --pwm_list=pwm_list.txt --reference hg19/hg19.genome.fa --out_prefix het.medusa.differential --chrom_sizes hg19/hg19.chrom.sizes  --num_hits_per_motif 1 --p_val 0.00005 --positions_bed peaks.differential --thresholds fdr0.2.pval.0.00005.heterokaryon_data.score_cutoffs.tsv --binarize
+
+#python scan_motifs.py --pwm_list pwm_list.txt --reference hg19/hg19.genome.fa --out_prefix dmso.labels --chrom_sizes hg19/hg19.chrom.sizes --background_freqs fdr0.2.pval.0.00005.dmso_data.foreground_freqs.txt --num_hits_per_motif 1 --p_val 0.00005 --positions_bed dmso.labels.txt --thresholds fdr0.2.pval.0.00005.dmso_data.score_cutoffs.tsv
+
+#THIS IS USING THE CISBP MOTIF SET
+#Peyton peak set
+
+#nadine_binary_test_april12
+#python scan_motifs.py --pwm_list pwm_list_cisbp.txt  --positions_bed peaks_nadine_binary_test_april12.bed --reference hg19/hg19.genome.fa --out_prefix scan_nadine_binary_test_april12 --chrom_sizes hg19/hg19.chrom.sizes --num_hits_per_motif 1 --p_val 0.00005 --thresholds thresholds_nadine_binary_test_april12.score_cutoffs.tsv  --freqs 
+
+#nadine_diff_wrt_HSC_april4_240k.bed
+#python scan_motifs.py --pwm_list pwm_list_cisbp.txt --positions_bed peaks_nadine_diff_wrt_HSC_april4_240K.bed --reference hg19/hg19.genome.fa --out_prefix scan_nadine_diff_wrt_HSC_april4_240k --chrom_sizes hg19/hg19.chrom.sizes --num_hits_per_motif 1 --p_val 0.00005 --thresholds thresholds_nadine_diff_wrt_HSC_april4_240K.score_cutoffs.tsv --freqs
+
+
+#thresholds_nadine_250bpcore_binary_april24_100K.foreground_freqs.txt
+#python scan_motifs.py --pwm_list pwm_list_cisbp.txt --positions_bed /mnt/lab_data/kundaje/users/pgreens/projects/hematopoiesis/boosting_data_sets/nadine_250bpcore_binary_april24_100K/peak_names.txt --reference hg19/hg19.genome.fa --out_prefix scan_nadine_250bpcore_binary_april24_100K --chrom_sizes hg19/hg19.chrom.sizes --num_hits_per_motif 1 --p_val 0.00005 --thresholds thresholds_nadine_250bpcore_binary_april24_100K.score_cutoffs.tsv --freqs --binarize 
+
+#python scan_motifs.py --pwm_list pwm_list_cisbp.txt --positions_bed /mnt/lab_data/kundaje/users/pgreens/projects/hematopoiesis/boosting_data_sets/nadine_250bpcore_binary_april24_200K/peak_names.txt --reference hg19/hg19.genome.fa --out_prefix scan_nadine_250bpcore_binary_april24_200K --chrom_sizes hg19/hg19.chrom.sizes --num_hits_per_motif 1 --p_val 0.00005 --thresholds thresholds_nadine_250bpcore_binary_april24_200K.score_cutoffs.tsv --freqs
+
+#python scan_motifs.py --pwm_list pwm_list_cisbp.txt --positions_bed /mnt/lab_data/kundaje/users/pgreens/projects/hematopoiesis/boosting_data_sets/nadine_250bpcore_binary_april24_50K/peak_names.txt --reference hg19/hg19.genome.fa --out_prefix scan_nadine_250bpcore_binary_april24_50K  --chrom_sizes hg19/hg19.chrom.sizes --num_hits_per_motif 1 --p_val 0.00005 --thresholds thresholds_nadine_250bpcore_binary_april24_50K.score_cutoffs.tsv --freqs
+
+
