@@ -7,13 +7,17 @@ def parse_args():
     parser.add_argument("--bed_file")
     parser.add_argument("--target_length",type=int,default=1000) 
     parser.add_argument("--outf")
+    parser.add_argument("--skip_header",action="store_true")
     return parser.parse_args()
 
 def main():
     args=parse_args()
     outf=open(args.outf,'w')
     bed_file=open(args.bed_file,'r').read().strip().split('\n')
-    for line in bed_file:
+    starting_index=0
+    if (args.skip_header==True):
+        starting_index=1
+    for line in bed_file[starting_index::]:
         tokens=line.split('\t')
         chrom=tokens[0]
         start_pos=int(tokens[1])
