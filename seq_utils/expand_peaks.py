@@ -17,6 +17,7 @@ def main():
     starting_index=0
     if (args.skip_header==True):
         starting_index=1
+        outf.write(bed_file[0]+'\n')
     for line in bed_file[starting_index::]:
         tokens=line.split('\t')
         chrom=tokens[0]
@@ -26,8 +27,9 @@ def main():
         left_pad=math.floor(padding/2)
         right_pad=math.ceil(padding/2)
         new_start=start_pos-left_pad
-        new_end=end_pos+right_pad 
-        outf.write(chrom+'\t'+str(new_start)+'\t'+str(new_end)+'\n')
+        new_end=end_pos+right_pad
+        other='\t'.join(tokens[3::])
+        outf.write(chrom+'\t'+str(new_start)+'\t'+str(new_end)+'\t'+other+'\n')
         
         
 
