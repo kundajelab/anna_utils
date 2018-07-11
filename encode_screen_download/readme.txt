@@ -1,5 +1,5 @@
 1. download ENCODE summary JSON: https://www.encodeproject.org/search/?searchTerm=cREs&type=FileSet&limit=all&format=json
-2. grep out accessions 
+2. grep out accessions to a file called "accessions". See example here 
 3. convert accessions to url: https://www.encodeproject.org/publication-data/[ACCESSION]?format=json 
 To do this, run "accession_to_download_link.py"
 4. download accession urls
