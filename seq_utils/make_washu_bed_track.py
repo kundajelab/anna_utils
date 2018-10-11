@@ -13,7 +13,7 @@ def main():
     counter=0 
     for line in data:
         tokens=line.split('\t')[0:3]
-        outf.write('\t'.join(tokens)+'\t.\t'+str(counter)+'\t.\n')
+        outf.write('\t'.join(tokens)+'\t'+str(counter)+'\t'+str(counter)+'\t.\n')
         counter+=1
     
         
