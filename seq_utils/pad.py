@@ -28,7 +28,7 @@ def main():
         endpos+=int(math.ceil(topad/2))
         if startpos < 1:
             startpos=1
-            endpos=startpos+args.desired_length-1
+            endpos=startpos+args.desired_length
         if endpos> chromsize_dict[chrom]:
             print("skipping line due to invalid chromosome position:"+line)
             continue
