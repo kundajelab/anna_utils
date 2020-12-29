@@ -12,7 +12,7 @@ import h5py
 import pdb 
 
 def parse_args():
-    parser=argparse.ArgumentParser(description='provide a director of PWM motif files and source fasta file as well the interval sizes to scan')
+    parser=argparse.ArgumentParser(description='provide a directory of PWM motif files and source fasta file as well the interval sizes to scan')
     parser.add_argument('--pwm_list',help='file containing list of directories to all pwms to use, see example pwm_list_cisbp.txt in this repository')
     parser.add_argument('--reference',help='reference fasta file')
     parser.add_argument('--out_prefix',help='output file prefix')
